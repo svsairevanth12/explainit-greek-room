@@ -592,4 +592,55 @@ export class SupabaseService {
     if (error) throw error
     return data
   }
+
+  // Analytics methods for dashboard
+  static async getAnalyticsData(type: 'users' | 'sessions' | 'performance' | 'learning_analytics') {
+    try {
+      switch (type) {
+        case 'users':
+          const { data: users, error: usersError } = await supabaseAdmin
+            .from('users')
+            .select('id, created_at, last_active')
+            .order('created_at', { ascending: false });
+
+          if (usersError) throw usersError;
+          return users;
+
+        case 'sessions':
+          const { data: sessions, error: sessionsError } = await supabaseAdmin
+            .from('learning_analytics')
+            .select('user_id, created_at, time_spent')
+            .not('time_spent', 'is', null)
+            .order('created_at', { ascending: false });
+
+          if (sessionsError) throw sessionsError;
+          return sessions;
+
+        case 'performance':
+          const { data: performance, error: performanceError } = await supabaseAdmin
+            .from('learning_analytics')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (performanceError) throw performanceError;
+          return performance;
+
+        case 'learning_analytics':
+          const { data: analytics, error: analyticsError } = await supabaseAdmin
+            .from('learning_analytics')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(1000); // Limit for performance
+
+          if (analyticsError) throw analyticsError;
+          return analytics;
+
+        default:
+          return null;
+      }
+    } catch (error) {
+      console.error(`Error fetching ${type} analytics:`, error);
+      return null;
+    }
+  }
 }
