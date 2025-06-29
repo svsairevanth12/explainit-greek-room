@@ -26,34 +26,38 @@ import {
 
 const features = [
   {
+    title: "AI Tutor",
+    href: "/dashboard",
+    description: "Get personalized explanations for any topic with our AI-powered tutor.",
+    icon: BookOpen,
+  },
+  {
     title: "Exam Whisperer",
     href: "/exam-whisperer",
-    description: "Ask questions while studying and get instant explanations with interactive quizzes.",
-    icon: BookOpen,
-    badge: "AI-Powered",
+    description: "Practice with AI-generated quizzes tailored to your learning level.",
+    icon: BarChart3,
   },
   {
     title: "Language Buddy",
     href: "/language-buddy",
-    description: "Practice conversations with accent correction and cultural insights.",
+    description: "Learn languages through interactive conversations with AI.",
     icon: Globe,
-    badge: "Voice AI",
   },
   {
     title: "Parent Portal",
     href: "/parent-portal",
-    description: "Voice-activated progress summaries and meeting scheduling.",
-    icon: Phone,
-    badge: "Voice Control",
+    description: "Track your child's progress and get insights into their learning journey.",
+    icon: Users,
+    badge: "Family",
   },
 ];
 
 const resources = [
   {
-    title: "Study Analytics",
-    href: "/analytics",
-    description: "Track your learning progress and identify areas for improvement.",
-    icon: BarChart3,
+    title: "Help Center",
+    href: "/help",
+    description: "Find answers to common questions and get support.",
+    icon: HelpCircle,
   },
   {
     title: "Settings",
@@ -62,16 +66,16 @@ const resources = [
     icon: Settings,
   },
   {
-    title: "Help Center",
-    href: "/help",
-    description: "Get support and learn how to make the most of Explain It.",
-    icon: HelpCircle,
-  },
-  {
     title: "About Us",
     href: "/about",
-    description: "Learn about our mission and team.",
+    description: "Learn more about our mission and team.",
     icon: Users,
+  },
+  {
+    title: "Contact",
+    href: "/contact",
+    description: "Get in touch with our support team.",
+    icon: Phone,
   },
 ];
 
@@ -80,9 +84,11 @@ export function MainNav() {
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
 
   React.useEffect(() => {
-    const userData = localStorage.getItem("user");
-    const authToken = localStorage.getItem("auth-token");
-    setIsLoggedIn(!!(userData && authToken));
+    if (typeof window !== 'undefined') {
+      const userData = localStorage.getItem('user');
+      const authToken = localStorage.getItem('auth-token');
+      setIsLoggedIn(!!(userData && authToken));
+    }
   }, []);
 
   return (
@@ -106,36 +112,33 @@ export function MainNav() {
                   pathname === "/dashboard" && "bg-accent text-accent-foreground"
                 )}
               >
-                <Link href="/dashboard">
-                  Dashboard
-                </Link>
+                <Link href="/dashboard">Dashboard</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
           )}
           <NavigationMenuItem>
-            <NavigationMenuTrigger className="text-sm font-medium">
-              Features
-            </NavigationMenuTrigger>
+            <NavigationMenuTrigger>Features</NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
                 <li className="row-span-3">
                   <NavigationMenuLink asChild>
-                    <a
-                      className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-primary/20 to-accent/20 p-6 no-underline outline-none focus:shadow-md"
-                      href="/"
+                    <Link
+                      className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                      href="/dashboard"
                     >
+                      <Sparkles className="h-6 w-6" />
                       <div className="mb-2 mt-4 text-lg font-medium">
-                        Explain It
+                        AI-Powered Learning
                       </div>
                       <p className="text-sm leading-tight text-muted-foreground">
-                        Your AI-powered learning companion for mastering any subject with personalized explanations and interactive practice.
+                        Experience personalized education with our advanced AI tutoring system.
                       </p>
                     </Link>
                   </NavigationMenuLink>
                 </li>
                 {features.map((feature) => (
                   <ListItem
-                    key={feature.title}
+                    key={feature.href}
                     title={feature.title}
                     href={feature.href}
                     badge={feature.badge}
@@ -148,14 +151,12 @@ export function MainNav() {
             </NavigationMenuContent>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <NavigationMenuTrigger className="text-sm font-medium">
-              Resources
-            </NavigationMenuTrigger>
+            <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                 {resources.map((resource) => (
                   <ListItem
-                    key={resource.title}
+                    key={resource.href}
                     title={resource.title}
                     href={resource.href}
                     icon={resource.icon}
@@ -165,19 +166,6 @@ export function MainNav() {
                 ))}
               </ul>
             </NavigationMenuContent>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <NavigationMenuLink
-              asChild
-              className={cn(
-                "group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50",
-                pathname === "/contact" && "bg-accent text-accent-foreground"
-              )}
-            >
-              <Link href="/contact">
-                Contact
-              </Link>
-            </NavigationMenuLink>
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
@@ -196,7 +184,7 @@ const ListItem = React.forwardRef<
   return (
     <li>
       <NavigationMenuLink asChild>
-        <a
+        <Link
           ref={ref}
           className={cn(
             "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
@@ -205,7 +193,7 @@ const ListItem = React.forwardRef<
           {...props}
         >
           <div className="flex items-center gap-2">
-            {Icon && <Icon className="h-4 w-4 text-primary" />}
+            {Icon && <Icon className="h-4 w-4" />}
             <div className="text-sm font-medium leading-none">{title}</div>
             {badge && (
               <Badge variant="secondary" className="text-xs">
@@ -216,7 +204,7 @@ const ListItem = React.forwardRef<
           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
             {children}
           </p>
-        </a>
+        </Link>
       </NavigationMenuLink>
     </li>
   );
