@@ -23,6 +23,7 @@ import {
   Sparkles,
   Globe,
   Phone,
+  Video,
 } from "lucide-react";
 
 const features = [
@@ -37,6 +38,13 @@ const features = [
     href: "/exam-whisperer",
     description: "Practice with AI-generated quizzes tailored to your learning level.",
     icon: BarChart3,
+  },
+  {
+    title: "Video Explainer",
+    href: "/video-explainer",
+    description: "Create animated explainer videos with AI-generated scripts and audio.",
+    icon: Video,
+    badge: "New",
   },
   {
     title: "Language Buddy",
