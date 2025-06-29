@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from "next/server";
-import OpenAIService from "@/lib/openai";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,7 +40,24 @@ Example: "Welcome to our exploration of ${topic}. Today we'll discover the fasci
 
 Make it engaging and perfect for AI voice generation.`;
 
-    const script = await OpenAIService.generateExplanation(prompt, "General", "medium");
+    // Generate script using OpenAI directly
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert educational content creator who writes engaging scripts for explainer videos. Create clear, conversational scripts perfect for text-to-speech narration."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      max_tokens: 1000,
+      temperature: 0.7,
+    });
+
+    const script = completion.choices[0]?.message?.content || `Welcome to our exploration of ${topic}. This is a fascinating subject that we'll explore together in this video.`;
 
     // Clean the script to remove any unwanted formatting
     const cleanScript = cleanGeneratedScript(script);
