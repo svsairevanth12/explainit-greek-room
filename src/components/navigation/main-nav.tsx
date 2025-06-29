@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 "use client";
 
 import * as React from "react";
@@ -174,17 +175,19 @@ export function MainNav() {
 }
 
 const ListItem = React.forwardRef<
-  React.ElementRef<"a">,
+  HTMLAnchorElement,
   React.ComponentPropsWithoutRef<"a"> & {
     title: string;
     badge?: string;
     icon?: React.ComponentType<{ className?: string }>;
+    href: string;
   }
->(({ className, title, children, badge, icon: Icon, ...props }, ref) => {
+>(({ className, title, children, badge, icon: Icon, href, ...props }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
         <Link
+          href={href}
           ref={ref}
           className={cn(
             "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",

@@ -3,13 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint --fix",
     "db:seed": "node scripts/seed-supabase.js",
     "db:setup-adaptive": "node scripts/setup-adaptive-learning.js",
-    "test": "node tests/integration.test.js"
+    "test": "node tests/integration.test.js",
+    "type-check": "tsc --noEmit",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
