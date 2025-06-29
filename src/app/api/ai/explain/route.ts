@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import OpenAIService from "@/lib/openai";
 import { SupabaseService } from "@/lib/supabase";
@@ -32,8 +33,8 @@ export async function POST(request: NextRequest) {
           answer: "AI Generated",
           explanation,
           difficulty,
-          is_correct: null, // Not applicable for explanations
-          time_spent: null,
+          is_correct: undefined, // Not applicable for explanations
+          time_spent: undefined,
         });
       } catch (dbError) {
         console.error("Database save error:", dbError);

@@ -130,7 +130,7 @@ export function MainNav() {
                       <p className="text-sm leading-tight text-muted-foreground">
                         Your AI-powered learning companion for mastering any subject with personalized explanations and interactive practice.
                       </p>
-                    </a>
+                    </Link>
                   </NavigationMenuLink>
                 </li>
                 {features.map((feature) => (
