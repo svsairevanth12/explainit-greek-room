@@ -5,18 +5,14 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Brain, 
-  Globe, 
-  Users, 
-  Zap, 
-  Heart, 
-  Target, 
-  Award,
+import {
+  Brain,
+  Globe,
+  Users,
+  Zap,
+  Heart,
   BookOpen,
-  MessageSquare,
-  TrendingUp,
-  Sparkles
+  MessageSquare
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -40,7 +36,7 @@ const values = [
   {
     icon: Zap,
     title: "Innovation First",
-    description: "We're constantly pushing the boundaries of educational technology to create breakthrough learning experiences.",
+    description: "We&apos;re constantly pushing the boundaries of educational technology to create breakthrough learning experiences.",
   },
 ];
 
@@ -119,7 +115,7 @@ export default function AboutPage() {
               </span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8">
-              We're on a mission to make quality education accessible to everyone through 
+              We&apos;re on a mission to make quality education accessible to everyone through
               the power of artificial intelligence, voice technology, and personalized learning.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -175,7 +171,7 @@ export default function AboutPage() {
                 voice technology, and educational psychology to create the future of learning.
               </p>
               <p>
-                Today, we're proud to serve over a million students worldwide, helping them 
+                Today, we&apos;re proud to serve over a million students worldwide, helping them
                 achieve their academic goals through personalized AI tutoring, interactive 
                 practice, and family engagement tools.
               </p>
@@ -273,7 +269,7 @@ export default function AboutPage() {
             >
               <h2 className="text-3xl font-bold mb-4">Meet Our Team</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                We're a diverse team of educators, engineers, and AI researchers united by our passion for transforming education.
+                We&apos;re a diverse team of educators, engineers, and AI researchers united by our passion for transforming education.
               </p>
             </motion.div>
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
