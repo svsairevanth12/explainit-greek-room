@@ -3,8 +3,8 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AuthProvider } from "@/hooks/use-auth";
-import { VoiceChatWidget } from "@/components/voice/chat-widget";
 import { Toaster } from "@/components/ui/sonner";
+import Script from "next/script";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -51,14 +51,17 @@ export default function RootLayout({
           <AuthProvider>
             <div className="relative flex min-h-screen flex-col">
               {children}
-              <VoiceChatWidget
-                title="Explain It Assistant"
-                position="bottom-right"
-              />
               <Toaster />
             </div>
           </AuthProvider>
         </ThemeProvider>
+
+        {/* OmniDimension Web Widget */}
+        <Script
+          id="omnidimension-web-widget"
+          src="https://backend.omnidim.io/web_widget.js?secret_key=bd4b1db6f61ac7fe590638feb708917e"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
