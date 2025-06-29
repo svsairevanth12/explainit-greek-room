@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,8 +17,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create template-based animations instead of relying on OpenAI for HTML generation
-    const htmlContent = createAnimationTemplate(topic, style, duration, script);
+    // Generate AI-powered visual explanations with real-time animations
+    const htmlContent = await generateVisualExplanations(topic, style, duration, script);
 
     // Enhance the generated HTML with additional animations
     const enhancedHtml = enhanceAnimations(htmlContent, topic, style, duration);
@@ -43,7 +48,102 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function createAnimationTemplate(topic: string, style: string, duration: number, script: string): string {
+async function generateVisualExplanations(topic: string, style: string, duration: number, script: string): Promise<string> {
+  try {
+    // Generate AI-powered visual elements based on the topic and script
+    const visualPrompt = `Create detailed visual explanation elements for an educational video about "${topic}".
+
+Script content: "${script}"
+
+Generate a JSON structure with visual elements that should appear during the video:
+1. Charts and graphs (bar charts, pie charts, line graphs)
+2. Diagrams and flowcharts
+3. Interactive elements
+4. Data visualizations
+5. Concept illustrations
+6. Step-by-step visual breakdowns
+
+For each visual element, specify:
+- type: "chart", "diagram", "animation", "data", "concept"
+- timing: when it should appear (0-${duration} seconds)
+- data: actual data points or values to visualize
+- description: what it explains
+- animation: how it should animate in
+
+Focus on making complex concepts visual and easy to understand. Include real data and examples where possible.
+
+Return only valid JSON format.`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert data visualization and educational content creator. Generate detailed visual explanation structures in JSON format for educational videos."
+        },
+        {
+          role: "user",
+          content: visualPrompt
+        }
+      ],
+      max_tokens: 2000,
+      temperature: 0.7,
+    });
+
+    const visualData = completion.choices[0]?.message?.content;
+    let parsedVisuals;
+
+    try {
+      parsedVisuals = JSON.parse(visualData || '{}');
+    } catch {
+      parsedVisuals = generateDefaultVisuals(topic);
+    }
+
+    return createAdvancedAnimationTemplate(topic, style, duration, script, parsedVisuals);
+
+  } catch (error) {
+    console.error('Error generating visual explanations:', error);
+    return createAdvancedAnimationTemplate(topic, style, duration, script, generateDefaultVisuals(topic));
+  }
+}
+
+function generateDefaultVisuals(topic: string) {
+  // Generate default visuals based on topic
+  const topicVisuals: { [key: string]: any } = {
+    'machine learning': {
+      charts: [
+        { type: 'line', data: [10, 25, 45, 70, 85, 95], labels: ['Data', 'Training', 'Testing', 'Validation', 'Optimization', 'Deployment'], title: 'ML Pipeline Progress' },
+        { type: 'bar', data: [85, 92, 78, 88], labels: ['Accuracy', 'Precision', 'Recall', 'F1-Score'], title: 'Model Performance' }
+      ],
+      diagrams: [
+        { type: 'neural_network', nodes: [3, 5, 3, 1], title: 'Neural Network Architecture' },
+        { type: 'flowchart', steps: ['Input Data', 'Feature Engineering', 'Model Training', 'Evaluation', 'Deployment'], title: 'ML Workflow' }
+      ]
+    },
+    'photosynthesis': {
+      charts: [
+        { type: 'pie', data: [30, 45, 25], labels: ['Light Reactions', 'Calvin Cycle', 'Energy Storage'], title: 'Photosynthesis Process' },
+        { type: 'line', data: [0, 20, 60, 85, 95, 100], labels: ['Sunlight', 'Chlorophyll', 'Water', 'CO2', 'Glucose', 'Oxygen'], title: 'Energy Conversion' }
+      ],
+      diagrams: [
+        { type: 'plant_cell', components: ['Chloroplast', 'Thylakoid', 'Stroma'], title: 'Plant Cell Structure' },
+        { type: 'chemical_equation', formula: '6CO2 + 6H2O + light → C6H12O6 + 6O2', title: 'Photosynthesis Equation' }
+      ]
+    }
+  };
+
+  const topicKey = topic.toLowerCase();
+  return topicVisuals[topicKey] || {
+    charts: [
+      { type: 'bar', data: [25, 50, 75, 100], labels: ['Concept 1', 'Concept 2', 'Concept 3', 'Mastery'], title: `${topic} Progress` }
+    ],
+    diagrams: [
+      { type: 'concept_map', nodes: ['Introduction', 'Key Concepts', 'Applications', 'Summary'], title: `${topic} Overview` }
+    ]
+  };
+}
+
+function createAdvancedAnimationTemplate(topic: string, style: string, duration: number, script: string, visualData: any): string {
   const styleColors = getStyleColors(style);
 
   return `
@@ -52,7 +152,9 @@ function createAnimationTemplate(topic: string, style: string, duration: number,
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${topic} - Explainer Video</title>
+    <title>${topic} - Visual Explainer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -60,47 +162,180 @@ function createAnimationTemplate(topic: string, style: string, duration: number,
             overflow: hidden;
             background: ${styleColors.background};
             height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             position: relative;
         }
 
         .video-container {
             width: 100%;
             height: 100%;
-            position: relative;
+            display: grid;
+            grid-template-areas:
+                "title title"
+                "content visuals"
+                "progress progress";
+            grid-template-rows: 15% 75% 10%;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .title-section {
+            grid-area: title;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
             color: ${styleColors.text};
-            z-index: 10;
         }
 
         .title {
-            font-size: 3.5rem;
+            font-size: 3rem;
             font-weight: bold;
-            margin-bottom: 2rem;
             opacity: 0;
-            transform: translateY(50px);
+            transform: translateY(30px);
             animation: slideInFade 2s ease-out forwards;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
+        .content-section {
+            grid-area: content;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 20px;
+            color: ${styleColors.text};
+        }
+
+        .visuals-section {
+            grid-area: visuals;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.8s ease;
+        }
+
+        .chart-container.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .diagram-container {
+            width: 100%;
+            height: 200px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.8s ease;
+        }
+
+        .diagram-container.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
         .content {
-            font-size: 1.8rem;
-            max-width: 85%;
-            line-height: 1.8;
+            font-size: 1.4rem;
+            line-height: 1.6;
             opacity: 0;
             transform: translateY(30px);
             animation: slideInFade 2s ease-out 1s forwards;
             background: rgba(255,255,255,0.1);
-            padding: 2rem;
-            border-radius: 20px;
+            padding: 1.5rem;
+            border-radius: 15px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.5s ease;
+        }
+
+        .progress-section {
+            grid-area: progress;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: ${styleColors.accent};
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        .data-point {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 5px;
+            background: ${styleColors.interactive};
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            opacity: 0;
+            transform: scale(0);
+            animation: popIn 0.5s ease forwards;
+        }
+
+        .neural-network {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+        }
+
+        .network-layer {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            height: 80%;
+        }
+
+        .neuron {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: ${styleColors.interactive};
+            margin: 5px;
+            opacity: 0;
+            animation: neuronPulse 2s ease-in-out infinite;
+        }
+
+        .connection {
+            position: absolute;
+            height: 2px;
+            background: ${styleColors.accent};
+            opacity: 0.6;
+            animation: dataFlow 3s ease-in-out infinite;
         }
 
         .floating-shapes {
@@ -167,21 +402,35 @@ function createAnimationTemplate(topic: string, style: string, duration: number,
         }
 
         @keyframes slideInFade {
-            from { opacity: 0; transform: translateY(50px); }
+            from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes floatAround {
-            0%, 100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
-            25% { transform: translateY(-30px) translateX(20px) rotate(90deg); }
-            50% { transform: translateY(-10px) translateX(-20px) rotate(180deg); }
-            75% { transform: translateY(-40px) translateX(10px) rotate(270deg); }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 ${styleColors.interactive}; }
-            50% { transform: scale(1.05); box-shadow: 0 0 0 10px transparent; }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
+        @keyframes neuronPulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        @keyframes dataFlow {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes chartGrow {
+            from { height: 0; }
+            to { height: var(--target-height); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes bounce {
@@ -207,25 +456,30 @@ function createAnimationTemplate(topic: string, style: string, duration: number,
     </style>
 </head>
 <body>
-    <div class="floating-shapes">
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
-    </div>
-
     <div class="video-container">
-        <h1 class="title">${topic}</h1>
-        <div class="content content-transition" id="content">
-            <p>Welcome to our exploration of ${topic}. Let's dive into this fascinating topic together!</p>
+        <div class="title-section">
+            <h1 class="title">${topic}</h1>
         </div>
 
-        <div class="interactive-element" style="top: 15%; left: 15%;" onclick="createRipple(event)">💡</div>
-        <div class="interactive-element" style="top: 25%; right: 20%;" onclick="createRipple(event)">🚀</div>
-        <div class="interactive-element" style="bottom: 30%; left: 25%;" onclick="createRipple(event)">⭐</div>
+        <div class="content-section">
+            <div class="content" id="content">
+                <p>Welcome to our visual exploration of ${topic}. Let's understand this concept through interactive visualizations!</p>
+            </div>
+        </div>
 
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
+        <div class="visuals-section" id="visualsSection">
+            <div class="chart-container" id="chartContainer">
+                <canvas id="mainChart" width="400" height="250"></canvas>
+            </div>
+            <div class="diagram-container" id="diagramContainer">
+                <div id="diagramContent"></div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
         </div>
     </div>
 
@@ -233,37 +487,242 @@ function createAnimationTemplate(topic: string, style: string, duration: number,
         let isPlaying = false;
         let animationStep = 0;
         let progressInterval;
+        let currentChart = null;
         const totalDuration = ${duration};
 
+        // Visual data from AI generation
+        const visualData = ${JSON.stringify(visualData)};
+
         const contentSteps = [
-            "Welcome to our exploration of ${topic}. Let's dive into this fascinating topic together!",
-            "Understanding the fundamental concepts and core principles...",
-            "Exploring practical applications and real-world examples...",
-            "Discovering key insights and important details...",
-            "Wrapping up with a comprehensive summary and next steps..."
+            "Welcome to our visual exploration of ${topic}. Let's understand this concept through interactive visualizations!",
+            "Let's start by examining the key data and relationships...",
+            "Now we'll explore the underlying patterns and structures...",
+            "Here we can see the practical applications and real-world impact...",
+            "Finally, let's summarize what we've learned with a comprehensive overview..."
         ];
 
-        function createRipple(event) {
-            const element = event.target;
-            const ripple = document.createElement('div');
-            ripple.style.position = 'absolute';
-            ripple.style.borderRadius = '50%';
-            ripple.style.background = 'rgba(255, 255, 255, 0.8)';
-            ripple.style.transform = 'scale(0)';
-            ripple.style.animation = 'rippleEffect 0.8s linear';
-            ripple.style.left = '50%';
-            ripple.style.top = '50%';
-            ripple.style.width = '20px';
-            ripple.style.height = '20px';
-            ripple.style.marginLeft = '-10px';
-            ripple.style.marginTop = '-10px';
-            ripple.style.pointerEvents = 'none';
+        // Chart creation functions
+        function createBarChart(data, labels, title) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (currentChart) currentChart.destroy();
 
-            element.appendChild(ripple);
+            currentChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: title,
+                        data: data,
+                        backgroundColor: '${styleColors.interactive}',
+                        borderColor: '${styleColors.accent}',
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: title,
+                            color: 'white',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: 'white' },
+                            grid: { color: 'rgba(255,255,255,0.2)' }
+                        },
+                        x: {
+                            ticks: { color: 'white' },
+                            grid: { color: 'rgba(255,255,255,0.2)' }
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
 
-            setTimeout(() => {
-                ripple.remove();
-            }, 800);
+        function createLineChart(data, labels, title) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (currentChart) currentChart.destroy();
+
+            currentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: title,
+                        data: data,
+                        borderColor: '${styleColors.accent}',
+                        backgroundColor: '${styleColors.interactive}',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: title,
+                            color: 'white',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: 'white' },
+                            grid: { color: 'rgba(255,255,255,0.2)' }
+                        },
+                        x: {
+                            ticks: { color: 'white' },
+                            grid: { color: 'rgba(255,255,255,0.2)' }
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
+
+        function createPieChart(data, labels, title) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (currentChart) currentChart.destroy();
+
+            currentChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '${styleColors.interactive}',
+                            '${styleColors.accent}',
+                            'rgba(255,255,255,0.6)',
+                            'rgba(255,255,255,0.4)'
+                        ],
+                        borderWidth: 2,
+                        borderColor: 'white'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: title,
+                            color: 'white',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: 'white' }
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
+
+        function createNeuralNetwork() {
+            const container = document.getElementById('diagramContent');
+            container.innerHTML = '';
+            container.className = 'neural-network';
+
+            const layers = [3, 5, 3, 1]; // Neural network structure
+
+            layers.forEach((nodeCount, layerIndex) => {
+                const layer = document.createElement('div');
+                layer.className = 'network-layer';
+
+                for (let i = 0; i < nodeCount; i++) {
+                    const neuron = document.createElement('div');
+                    neuron.className = 'neuron';
+                    neuron.style.animationDelay = \`\${(layerIndex * 0.2) + (i * 0.1)}s\`;
+                    layer.appendChild(neuron);
+                }
+
+                container.appendChild(layer);
+            });
+        }
+
+        function createFlowchart(steps) {
+            const container = document.getElementById('diagramContent');
+            container.innerHTML = '';
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.justifyContent = 'space-around';
+            container.style.height = '100%';
+
+            steps.forEach((step, index) => {
+                const stepElement = document.createElement('div');
+                stepElement.style.cssText = \`
+                    padding: 10px 20px;
+                    background: ${styleColors.interactive};
+                    border-radius: 25px;
+                    color: white;
+                    text-align: center;
+                    font-weight: bold;
+                    margin: 5px 0;
+                    opacity: 0;
+                    transform: translateX(-50px);
+                    animation: fadeInUp 0.8s ease forwards;
+                    animation-delay: \${index * 0.3}s;
+                \`;
+                stepElement.textContent = step;
+                container.appendChild(stepElement);
+
+                if (index < steps.length - 1) {
+                    const arrow = document.createElement('div');
+                    arrow.style.cssText = \`
+                        width: 0;
+                        height: 0;
+                        border-left: 10px solid transparent;
+                        border-right: 10px solid transparent;
+                        border-top: 15px solid ${styleColors.accent};
+                        margin: 5px auto;
+                        opacity: 0;
+                        animation: fadeInUp 0.8s ease forwards;
+                        animation-delay: \${(index + 0.5) * 0.3}s;
+                    \`;
+                    container.appendChild(arrow);
+                }
+            });
+        }
+
+        function createDataVisualization(dataPoints) {
+            const container = document.getElementById('diagramContent');
+            container.innerHTML = '';
+            container.style.display = 'flex';
+            container.style.flexWrap = 'wrap';
+            container.style.justifyContent = 'center';
+            container.style.alignItems = 'center';
+
+            dataPoints.forEach((point, index) => {
+                const dataElement = document.createElement('div');
+                dataElement.className = 'data-point';
+                dataElement.style.animationDelay = \`\${index * 0.2}s\`;
+                dataElement.textContent = point;
+                container.appendChild(dataElement);
+            });
         }
 
         function updateContent(text) {
@@ -288,18 +747,13 @@ function createAnimationTemplate(topic: string, style: string, duration: number,
             const stepDuration = totalDuration / contentSteps.length;
             let currentStep = 0;
 
+            // Show initial chart
+            showVisualForStep(0);
+
             const stepInterval = setInterval(() => {
                 if (currentStep < contentSteps.length && isPlaying) {
                     updateContent(contentSteps[currentStep]);
-
-                    // Add visual effects
-                    const elements = document.querySelectorAll('.interactive-element');
-                    elements.forEach((el, index) => {
-                        setTimeout(() => {
-                            el.style.animation = 'bounce 1s ease-in-out';
-                        }, index * 200);
-                    });
-
+                    showVisualForStep(currentStep);
                     currentStep++;
                 } else {
                     clearInterval(stepInterval);
@@ -316,6 +770,83 @@ function createAnimationTemplate(topic: string, style: string, duration: number,
                     clearInterval(progressInterval);
                 }
             }, 100);
+        }
+
+        function showVisualForStep(step) {
+            const chartContainer = document.getElementById('chartContainer');
+            const diagramContainer = document.getElementById('diagramContainer');
+
+            // Reset containers
+            chartContainer.classList.remove('active');
+            diagramContainer.classList.remove('active');
+
+            setTimeout(() => {
+                switch(step) {
+                    case 0:
+                        // Introduction - show overview chart
+                        if (visualData.charts && visualData.charts[0]) {
+                            const chart = visualData.charts[0];
+                            if (chart.type === 'bar') {
+                                createBarChart(chart.data, chart.labels, chart.title);
+                            } else if (chart.type === 'line') {
+                                createLineChart(chart.data, chart.labels, chart.title);
+                            } else if (chart.type === 'pie') {
+                                createPieChart(chart.data, chart.labels, chart.title);
+                            }
+                        } else {
+                            // Default chart for topic
+                            createBarChart([25, 50, 75, 100], ['Basics', 'Concepts', 'Applications', 'Mastery'], \`\${topic} Learning Progress\`);
+                        }
+                        chartContainer.classList.add('active');
+                        break;
+
+                    case 1:
+                        // Key concepts - show diagram
+                        if (visualData.diagrams && visualData.diagrams[0]) {
+                            const diagram = visualData.diagrams[0];
+                            if (diagram.type === 'neural_network') {
+                                createNeuralNetwork();
+                            } else if (diagram.type === 'flowchart') {
+                                createFlowchart(diagram.steps || ['Step 1', 'Step 2', 'Step 3', 'Step 4']);
+                            } else {
+                                createDataVisualization(['Concept A', 'Concept B', 'Concept C', 'Integration']);
+                            }
+                        } else {
+                            createFlowchart(['Introduction', 'Core Concepts', 'Applications', 'Summary']);
+                        }
+                        diagramContainer.classList.add('active');
+                        break;
+
+                    case 2:
+                        // Patterns - show second chart if available
+                        if (visualData.charts && visualData.charts[1]) {
+                            const chart = visualData.charts[1];
+                            if (chart.type === 'bar') {
+                                createBarChart(chart.data, chart.labels, chart.title);
+                            } else if (chart.type === 'line') {
+                                createLineChart(chart.data, chart.labels, chart.title);
+                            } else if (chart.type === 'pie') {
+                                createPieChart(chart.data, chart.labels, chart.title);
+                            }
+                        } else {
+                            createLineChart([10, 30, 60, 85, 95], ['Start', 'Learning', 'Practice', 'Apply', 'Master'], 'Progress Over Time');
+                        }
+                        chartContainer.classList.add('active');
+                        break;
+
+                    case 3:
+                        // Applications - show data visualization
+                        createDataVisualization(['Real-world Use', 'Industry Applications', 'Future Potential', 'Impact']);
+                        diagramContainer.classList.add('active');
+                        break;
+
+                    case 4:
+                        // Summary - show comprehensive chart
+                        createPieChart([30, 25, 25, 20], ['Theory', 'Practice', 'Applications', 'Innovation'], \`\${topic} Knowledge Distribution\`);
+                        chartContainer.classList.add('active');
+                        break;
+                }
+            }, 300);
         }
 
         // Message listener for external control
@@ -337,25 +868,21 @@ function createAnimationTemplate(topic: string, style: string, duration: number,
                     if (progressInterval) clearInterval(progressInterval);
                     updateProgress(0);
                     updateContent(contentSteps[0]);
+                    if (currentChart) currentChart.destroy();
+                    document.getElementById('diagramContent').innerHTML = '';
+                    document.getElementById('chartContainer').classList.remove('active');
+                    document.getElementById('diagramContainer').classList.remove('active');
                     break;
             }
         });
 
-        // Add ripple effect CSS
-        const style = document.createElement('style');
-        style.textContent = \`
-            @keyframes rippleEffect {
-                to {
-                    transform: scale(4);
-                    opacity: 0;
-                }
-            }
-        \`;
-        document.head.appendChild(style);
-
         // Auto-start when loaded
         window.addEventListener('load', function() {
-            console.log('Animation ready for playback');
+            console.log('Visual explainer ready for playback');
+            // Initialize first visual
+            setTimeout(() => {
+                showVisualForStep(0);
+            }, 1000);
         });
     </script>
 </body>
